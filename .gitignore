@@ -1,0 +1,50 @@
+# ─── Dependencias ────────────────────────────────────────────
+node_modules/
+
+# ─── Build / output generado ─────────────────────────────────
+dist/
+build/
+.next/
+out/
+backend/generated/
+
+# ─── Variables de entorno 
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ─── Logs ────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── Tests / cobertura ───────────────────────────────────────
+coverage/
+.nyc_output/
+
+# ─── Sistema operativo ───────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── IDEs ────────────────────────────────────────────────────
+.idea/
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ─── Temporales ──────────────────────────────────────────────
+.temp
+.tmp
+*.pid
+*.seed
+*.pid.lock

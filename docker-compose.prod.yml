@@ -1,0 +1,67 @@
+# docker-compose.prod.yml
+# Para producción: incluye TODOS los servicios (infra + backend + frontend)
+# Uso: docker compose -f docker-compose.prod.yml up --build
+
+services:
+  # ─── Infraestructura ──────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: eduparche_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: eduparche_redis
+    restart: always
+    volumes:
+      - redisdata:/data
+
+  # ─── Backend ──────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: eduparche_backend
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 3001
+      NODE_ENV: production
+      FRONTEND_URL: ${FRONTEND_URL}
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ─── Frontend ─────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    container_name: eduparche_frontend
+    restart: always
+    environment:
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  redisdata:

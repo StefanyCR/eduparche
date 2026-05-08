@@ -1,0 +1,46 @@
+# docker-compose.yml — infraestructura de desarrollo (DB, Redis, pgAdmin)
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: eduparche_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: eduparche_user
+      POSTGRES_PASSWORD: eduparche_pass
+      POSTGRES_DB: eduparche_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eduparche_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: eduparche_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@eduparche.co
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    container_name: eduparche_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+volumes:
+  pgdata:
+  redisdata:
