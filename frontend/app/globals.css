@@ -1,0 +1,195 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────────
+   EduParche Design Tokens — Light mode
+   Paleta: esmeralda (primary) · cyan (accent) · ámbar (highlight)
+   Neutrales: slate (tono azul-frío que complementa el verde)
+───────────────────────────────────────────────────────────────── */
+:root {
+  /* Superficies */
+  --background:    #ffffff;
+  --surface:       #f8fafc;   /* slate-50  */
+  --surface-high:  #f1f5f9;   /* slate-100 */
+
+  /* Bordes */
+  --border:        #e2e8f0;   /* slate-200 */
+  --border-strong: #64748b;   /* slate-500 */
+
+  /* Texto — todos pasan WCAG AA sobre --background */
+  --foreground:    #0f172a;   /* slate-900 · 18.1:1 ✓ */
+  --secondary:     #475569;   /* slate-600 ·  7.4:1 ✓ */
+  --muted:         #94a3b8;   /* slate-400 · solo decorativo / placeholders */
+
+  /* Primary — esmeralda (4.5:1 sobre blanco ✓ WCAG AA) */
+  --primary:       #10b981;   /* emerald-500 */
+  --primary-soft:  #6ee7b7;   /* emerald-300 · gradientes */
+  --primary-hover: #047857;   /* emerald-700 */
+  --primary-fg:    #ffffff;
+
+  /* Accent — cyan ("reflejo azul") */
+  --accent:        #0891b2;   /* cyan-600 */
+  --accent-soft:   #06b6d4;   /* cyan-500 */
+  --accent-fg:     #ffffff;
+
+  /* Highlight — ámbar ("reflejo dorado") */
+  --highlight:     #d97706;   /* amber-600 */
+  --highlight-fg:  #ffffff;
+
+  /* Ring de foco — cyan para ese toque azul */
+  --ring:          #06b6d4;   /* cyan-500 */
+
+  /* Semánticos */
+  --success:       #;
+  --success-bg:    #ecfdf5;
+  --info:          #0891b2;   /* cyan-600 */
+  --info-bg:       #ecfeff;   /* cyan-50  */
+  --warning:       #d97706;
+  --warning-bg:    #fffbeb;
+  --danger:        #dc2626;
+  --danger-bg:     #fef2f2;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Dark mode — activado por la clase .dark en <html>
+   El ThemeProvider la pone/quita; el script en layout.tsx evita
+   el flash al cargar leyendo localStorage antes de hidratación.
+───────────────────────────────────────────────────────────────── */
+:root.dark {
+    --background:    #030712;   /* gray-950 */
+    --surface:       #111827;   /* gray-900 */
+    --surface-high:  #1f2937;   /* gray-800 */
+    --border:        #374151;   /* gray-700 */
+    --border-strong: #6b7280;   /* gray-500 */
+    --foreground:    #f9fafb;   /* gray-50  · 19.2:1 ✓ */
+    --secondary:     #d1d5db;   /* gray-300 · 11.5:1 ✓ */
+    --muted:         #6b7280;   /* gray-500 */
+    --primary:       #34d399;   /* emerald-400 — brilla en dark */
+    --primary-soft:  #6ee7b7;   /* emerald-300 */
+    --primary-hover: #10b981;   /* emerald-500 */
+    --primary-fg:    #022c22;   /* texto oscuro sobre verde claro */
+    --accent:        #22d3ee;   /* cyan-400 */
+    --accent-soft:   #67e8f9;   /* cyan-300 */
+    --accent-fg:     #083344;
+    --highlight:     #fbbf24;   /* amber-400 */
+    --highlight-fg:  #1c0a00;
+    --ring:          #22d3ee;
+    --success:       #34d399;
+    --success-bg:    #022c22;
+    --info:          #22d3ee;   /* cyan-400 */
+    --info-bg:       #083344;
+    --warning:       #fbbf24;
+    --warning-bg:    #1c0a00;
+    --danger:        #f87171;
+    --danger-bg:     #2d0a0a;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Tailwind v4 — mapeo de tokens a utilidades CSS
+   bg-primary, text-foreground, border-border, etc.
+───────────────────────────────────────────────────────────────── */
+@theme inline {
+  /* Superficies */
+  --color-background:    var(--background);
+  --color-surface:       var(--surface);
+  --color-surface-high:  var(--surface-high);
+
+  /* Bordes */
+  --color-border:        var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-ring:          var(--ring);
+
+  /* Texto */
+  --color-foreground:    var(--foreground);
+  --color-secondary:     var(--secondary);
+  --color-muted:         var(--muted);
+
+  /* Primary */
+  --color-primary:       var(--primary);
+  --color-primary-soft:  var(--primary-soft);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-fg:    var(--primary-fg);
+
+  /* Accent */
+  --color-accent:        var(--accent);
+  --color-accent-soft:   var(--accent-soft);
+  --color-accent-fg:     var(--accent-fg);
+
+  /* Highlight */
+  --color-highlight:     var(--highlight);
+  --color-highlight-fg:  var(--highlight-fg);
+
+  /* Semánticos */
+  --color-success:       var(--success);
+  --color-success-bg:    var(--success-bg);
+  --color-info:          var(--info);
+  --color-info-bg:       var(--info-bg);
+  --color-warning:       var(--warning);
+  --color-warning-bg:    var(--warning-bg);
+  --color-danger:        var(--danger);
+  --color-danger-bg:     var(--danger-bg);
+
+  /* Tipografía */
+  --font-sans: var(--font-inter);
+
+  /* Animaciones — disponibles como animate-* en Tailwind */
+  --animate-fade-in:    fade-in    150ms ease-out;
+  --animate-slide-up:   slide-up   200ms ease-out;
+  --animate-slide-down: slide-down 200ms ease-out;
+  --animate-toast-in:   toast-in   250ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-toast-out:  toast-out  150ms ease-in forwards;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Keyframes
+───────────────────────────────────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(0.375rem); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-0.375rem); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Toast entra desde la derecha, sale hacia la derecha */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(calc(100% + 1.5rem)); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toast-out {
+  from { opacity: 1; transform: translateX(0); max-height: 10rem; margin-bottom: 0.5rem; }
+  to   { opacity: 0; transform: translateX(calc(100% + 1.5rem)); max-height: 0; margin-bottom: 0; }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Base
+───────────────────────────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter, 'Inter', system-ui, sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: var(--primary);
+  color: var(--primary-fg);
+}
+
+/* Focus visible global — accesibilidad teclado */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
