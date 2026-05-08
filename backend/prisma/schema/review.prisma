@@ -1,0 +1,23 @@
+// ============================================================
+// EVALUACIÓN DE TUTORES
+// ============================================================
+
+// El estudiante evalúa al tutor al completar el curso.
+// Si el curso tiene varios tutores asignados, puede evaluar a cada uno por separado.
+// La disponibilidad de esta evaluación se controla en la capa de negocio
+// (solo se habilita cuando el estudiante completa el curso).
+model TutorReview {
+  id        String   @id @default(cuid())
+  tutorId   String
+  studentId String
+  courseId  String
+  rating    Int      // 1 a 5 estrellas
+  comment   String?
+  createdAt DateTime @default(now())
+
+  tutor   User   @relation("TutorReviewed", fields: [tutorId], references: [id])
+  student User   @relation("StudentReviewer", fields: [studentId], references: [id])
+  course  Course @relation(fields: [courseId], references: [id])
+
+  @@unique([studentId, tutorId, courseId]) // un estudiante evalúa a cada tutor solo una vez por curso
+}

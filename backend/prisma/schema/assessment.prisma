@@ -1,0 +1,102 @@
+// ============================================================
+// EVALUACIONES
+// ============================================================
+
+// Actividad evaluativa.
+// La crea el admin (para el curso) o el tutor (para su módulo de tutoría).
+// `weight` = % que representa esta actividad en la nota final del curso.
+model Activity {
+  id          String       @id @default(cuid())
+  courseId    String
+  moduleId    String?      // si pertenece a un módulo específico
+  lessonId    String?      // si pertenece a una lección específica (ej: quiz al final)
+  title       String
+  description String?
+  type        ActivityType
+  dueDate     DateTime?
+  maxAttempts Int          @default(1)
+  allowRetry  Boolean      @default(false)
+  maxScore    Float        @default(100)
+  weight      Float        @default(0)  // peso en la nota final (0–100)
+  isActive    Boolean      @default(true)
+  createdById String
+  createdAt   DateTime     @default(now())
+
+  course      Course       @relation(fields: [courseId], references: [id])
+  module      Module?      @relation(fields: [moduleId], references: [id])
+  lesson      Lesson?      @relation(fields: [lessonId], references: [id])
+  createdBy   User         @relation(fields: [createdById], references: [id])
+  questions   Question[]
+  submissions Submission[]
+}
+
+// Pregunta de opción múltiple (para MULTIPLE_CHOICE o MIXED)
+model Question {
+  id         String @id @default(cuid())
+  activityId String
+  text       String
+  points     Float  @default(1)
+  order      Int
+
+  activity Activity           @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  options  QuestionOption[]
+  answers  SubmissionAnswer[]
+}
+
+model QuestionOption {
+  id         String  @id @default(cuid())
+  questionId String
+  text       String
+  isCorrect  Boolean @default(false)
+  order      Int
+
+  question Question           @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answers  SubmissionAnswer[]
+}
+
+// Entrega del estudiante a una actividad
+model Submission {
+  id            String           @id @default(cuid())
+  activityId    String
+  studentId     String
+  enrollmentId  String
+  attemptNumber Int              @default(1)
+  status        SubmissionStatus @default(DRAFT)
+  fileUrl       String?          // para FILE_SUBMISSION
+  textContent   String?          // para respuesta escrita
+  autoScore     Float?           // calculado automáticamente para opción múltiple
+  submittedAt   DateTime?
+  createdAt     DateTime         @default(now())
+
+  activity   Activity           @relation(fields: [activityId], references: [id])
+  student    User               @relation(fields: [studentId], references: [id])
+  enrollment Enrollment         @relation(fields: [enrollmentId], references: [id])
+  answers    SubmissionAnswer[]
+  grade      Grade?
+}
+
+// Respuesta a una pregunta de opción múltiple
+model SubmissionAnswer {
+  id               String @id @default(cuid())
+  submissionId     String
+  questionId       String
+  selectedOptionId String
+
+  submission     Submission     @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  question       Question       @relation(fields: [questionId], references: [id])
+  selectedOption QuestionOption @relation(fields: [selectedOptionId], references: [id])
+}
+
+// Calificación del tutor sobre una entrega
+model Grade {
+  id           String   @id @default(cuid())
+  submissionId String   @unique
+  gradedById   String
+  score        Float
+  maxScore     Float
+  feedback     String?
+  gradedAt     DateTime @default(now())
+
+  submission Submission @relation(fields: [submissionId], references: [id])
+  gradedBy   User       @relation("GradedBy", fields: [gradedById], references: [id])
+}

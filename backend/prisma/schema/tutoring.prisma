@@ -1,0 +1,51 @@
+// ============================================================
+// TUTORÍAS
+// ============================================================
+
+// EduParche no hace la videollamada — solo guarda el link externo (Meet/Teams/Zoom)
+model TutoringSession {
+  id              String          @id @default(cuid())
+  courseId        String
+  tutorId         String
+  title           String
+  topic           String?
+  type            TutoringType    @default(GROUP)
+  meetingLink     String?         // link generado en Meet/Teams/Zoom
+  platform        MeetingPlatform @default(MEET)
+  scheduledAt     DateTime
+  durationMin     Int             @default(60)
+  maxParticipants Int?            // null = sin límite
+  isRecorded      Boolean         @default(false)
+  recordingUrl    String?
+  status          SessionStatus   @default(SCHEDULED)
+  createdAt       DateTime        @default(now())
+
+  course      Course               @relation(fields: [courseId], references: [id])
+  tutor       User                 @relation("SessionHost", fields: [tutorId], references: [id])
+  enrollments TutoringEnrollment[]
+  materials   TutoringMaterial[]
+}
+
+model TutoringMaterial {
+  id         String   @id @default(cuid())
+  sessionId  String
+  title      String
+  fileUrl    String
+  uploadedAt DateTime @default(now())
+
+  session TutoringSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+// Inscripción del estudiante a una sesión de tutoría
+model TutoringEnrollment {
+  id         String   @id @default(cuid())
+  sessionId  String
+  studentId  String
+  enrolledAt DateTime @default(now())
+  attended   Boolean  @default(false)
+
+  session TutoringSession @relation(fields: [sessionId], references: [id])
+  student User            @relation(fields: [studentId], references: [id])
+
+  @@unique([sessionId, studentId])
+}

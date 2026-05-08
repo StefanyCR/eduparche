@@ -1,0 +1,84 @@
+// ============================================================
+// USUARIOS
+// ============================================================
+
+model User {
+  id           String     @id @default(cuid()) 
+  email        String     @unique
+  passwordHash String?    // null cuando el usuario usa solo Google OAuth
+  googleId     String?    @unique // null cuando el usuario usa solo email+contraseña
+  role         Role       @default(STUDENT)
+  status       UserStatus @default(ACTIVE)
+  totalPoints  Int        @default(0) // cache acumulado, se actualiza con cada PointTransaction
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  profile          Profile?
+  minorRequest     MinorApprovalRequest?  @relation("UserRequest")
+  requestsReviewed MinorApprovalRequest[] @relation("ReviewedBy")
+
+  enrollments    Enrollment[]
+  lessonProgress LessonProgress[]
+  submissions    Submission[]
+
+  gradesGiven      Grade[]             @relation("GradedBy")
+  tutorAssignments TutorCourse[]
+  tutoringHosted   TutoringSession[]   @relation("SessionHost")
+  tutoringAttended TutoringEnrollment[]
+
+  badges                  UserBadge[]
+  pointTransactions       PointTransaction[]
+  challengeParticipations ChallengeParticipation[]
+
+  certificates        Certificate[]
+  eventParticipations EventParticipation[]
+  notifications       Notification[]
+  notificationPrefs   NotificationPreference[]
+
+  coursesCreated    Course[]
+  activitiesCreated Activity[]
+  challengesCreated Challenge[]
+  eventsCreated     Event[]
+
+  forumThreads         ForumThread[] @relation("ThreadAuthor")
+  forumPosts           ForumPost[]   @relation("PostAuthor")
+  tutorReviewsReceived TutorReview[] @relation("TutorReviewed")
+  tutorReviewsGiven    TutorReview[] @relation("StudentReviewer")
+}
+
+model Profile {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  firstName   String
+  lastName    String
+  displayName String?
+  avatar      String?
+  bio         String?
+  phone       String?
+  birthDate   DateTime?
+  city           String?
+  documentType   DocumentType?
+  documentNumber String?       // cédula, tarjeta de identidad, pasaporte, etc.
+  isPublic       Boolean       @default(true)
+  updatedAt      DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Solicitud de aprobación para menores (14–17 años).
+// El menor puede adjuntar texto, un archivo (PDF/imagen), o ambos.
+// La validación de que al menos uno esté presente se hace en la capa de negocio (DTO).
+model MinorApprovalRequest {
+  id            String         @id @default(cuid())
+  userId        String         @unique
+  letter        String?        // texto libre de la carta (opcional si sube archivo)
+  letterFileUrl String?        // URL del archivo subido (PDF, imagen escaneada, etc.)
+  status        ApprovalStatus @default(PENDING)
+  reviewedById  String?
+  reviewNotes   String?        // comentarios del admin al aprobar o rechazar
+  reviewedAt    DateTime?
+  createdAt     DateTime       @default(now())
+
+  user       User  @relation("UserRequest", fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy User? @relation("ReviewedBy", fields: [reviewedById], references: [id])
+}

@@ -1,0 +1,44 @@
+// ============================================================
+// FOROS Y GRUPOS DE DISCUSIÓN
+// ============================================================
+
+// Cada curso tiene un foro propio donde los participantes pueden abrir hilos
+model Forum {
+  id        String   @id @default(cuid())
+  courseId  String   @unique // un foro por curso
+  title     String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  course  Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  threads ForumThread[]
+}
+
+model ForumThread {
+  id        String   @id @default(cuid())
+  forumId   String
+  authorId  String
+  title     String
+  isPinned  Boolean  @default(false) // el tutor o admin puede fijar hilos importantes
+  isLocked  Boolean  @default(false) // hilo cerrado: nadie más puede responder
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  forum  Forum       @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  author User        @relation("ThreadAuthor", fields: [authorId], references: [id])
+  posts  ForumPost[]
+}
+
+// Cada mensaje dentro de un hilo
+model ForumPost {
+  id        String    @id @default(cuid())
+  threadId  String
+  authorId  String
+  content   String
+  isEdited  Boolean   @default(false)
+  editedAt  DateTime?
+  createdAt DateTime  @default(now())
+
+  thread ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author User        @relation("PostAuthor", fields: [authorId], references: [id])
+}

@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// ENUMS — todos centralizados aquí para fácil referencia
+// ============================================================
+
+enum Role {
+  STUDENT
+  TUTOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  PENDING_APPROVAL // menor esperando aprobación del admin
+  ACTIVE
+  INACTIVE
+  REJECTED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CourseLevel {
+  BASIC
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum ContentStatus {
+  DRAFT
+  ACTIVE
+  DISABLED
+}
+
+enum MaterialType {
+  VIDEO_LINK // link a YouTube/Vimeo
+  FILE       // archivo subido (PDF, etc.)
+  TEXT       // texto enriquecido
+  QUIZ       // preguntas de opción múltiple
+}
+
+enum ActivityType {
+  FILE_SUBMISSION // sube archivo o escribe texto
+  MULTIPLE_CHOICE // opción múltiple (se autocorrige)
+  MIXED           // combinación de ambas
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  WITHDRAWN
+}
+
+enum LessonProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+  GRADED
+}
+
+enum TutoringType {
+  GROUP
+  INDIVIDUAL
+}
+
+enum MeetingPlatform {
+  MEET
+  TEAMS
+  ZOOM
+  OTHER
+}
+
+enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum ChallengeType {
+  WEEKLY
+  MONTHLY
+  SPECIAL
+}
+
+enum ChallengeStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+}
+
+enum EventType {
+  WORKSHOP
+  TALK
+  NETWORKING
+  SEMINAR
+}
+
+enum NotificationType {
+  ACCOUNT_APPROVED
+  ACCOUNT_REJECTED
+  COURSE_ENROLLED
+  LESSON_COMPLETED
+  COURSE_COMPLETED
+  ASSIGNMENT_DUE
+  ASSIGNMENT_GRADED
+  BADGE_EARNED
+  CHALLENGE_AVAILABLE
+  TUTORING_SCHEDULED
+  TUTORING_REMINDER
+  EVENT_AVAILABLE
+  GENERAL
+}
+
+enum GamificationTrigger {
+  LESSON_COMPLETED
+  MODULE_COMPLETED
+  COURSE_COMPLETED
+  CHALLENGE_COMPLETED
+  FIRST_LOGIN
+  PROFILE_COMPLETED
+}
+
+enum DocumentType {
+  CEDULA
+  TARJETA_IDENTIDAD
+  PASAPORTE
+  OTRO
+}

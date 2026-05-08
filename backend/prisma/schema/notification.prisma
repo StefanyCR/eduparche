@@ -1,0 +1,33 @@
+// ============================================================
+// NOTIFICACIONES
+// ============================================================
+
+model Notification {
+  id            String           @id @default(cuid())
+  userId        String
+  type          NotificationType
+  title         String
+  message       String
+  isRead        Boolean          @default(false)
+  readAt        DateTime?
+  referenceType String?          // "course", "submission", "badge", etc.
+  referenceId   String?          // id del recurso relacionado
+  scheduledAt   DateTime?        // null = enviar ya; fecha futura = encolar para enviar después
+  sentAt        DateTime?        // cuándo se envió efectivamente (email + in-app)
+  createdAt     DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// El usuario configura qué notificaciones recibe y por qué canal
+model NotificationPreference {
+  id     String           @id @default(cuid())
+  userId String
+  type   NotificationType
+  inApp  Boolean          @default(true)
+  email  Boolean          @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+}

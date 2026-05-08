@@ -1,0 +1,17 @@
+// ============================================================
+// CERTIFICADOS
+// ============================================================
+
+// Se genera automáticamente cuando el estudiante completa el 100% del curso
+model Certificate {
+  id             String   @id @default(cuid())
+  studentId      String
+  courseId       String
+  enrollmentId   String   @unique // un certificado por inscripción completada
+  issuedAt       DateTime @default(now())
+  certificateUrl String?  // URL del PDF generado
+
+  student    User       @relation(fields: [studentId], references: [id])
+  course     Course     @relation(fields: [courseId], references: [id])
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+}

@@ -1,0 +1,106 @@
+// ============================================================
+// CURSOS
+// ============================================================
+
+model CourseCategory {
+  id      String   @id @default(cuid())
+  name    String   @unique // Ej: "Programación", "Idiomas", "Habilidades laborales"
+  slug    String   @unique
+  courses Course[]
+}
+
+model Course {
+  id                   String        @id @default(cuid())
+  title                String
+  slug                 String        @unique
+  description          String
+  thumbnail            String?
+  level                CourseLevel   @default(BASIC)
+  categoryId           String
+  status               ContentStatus @default(DRAFT)
+  startDate            DateTime?
+  endDate              DateTime?
+  onlineHours          Int?
+  autonomousHours      Int?
+  // Si se programa el cierre: no se deshabilita mientras haya estudiantes activos.
+  // La lógica de protección se aplica en el servicio, no en la BD.
+  scheduledDisableAt   DateTime?
+  // Prerequisito: el estudiante debe haber completado este otro curso antes de inscribirse
+  prerequisiteCourseId String?
+  createdById          String
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  category           CourseCategory  @relation(fields: [categoryId], references: [id])
+  createdBy          User            @relation(fields: [createdById], references: [id])
+  prerequisiteCourse Course?         @relation("CoursePrerequisite", fields: [prerequisiteCourseId], references: [id])
+  dependentCourses   Course[]        @relation("CoursePrerequisite")
+  modules            Module[]
+  tutorAssignments   TutorCourse[]
+  enrollments        Enrollment[]
+  activities         Activity[]
+  certificates       Certificate[]
+  tutoringSessions   TutoringSession[]
+  requiredByEvents   Event[]
+  skills             CourseSkill[]
+  forum              Forum?
+  tutorReviews       TutorReview[]
+}
+
+// Relación M:M entre tutores y cursos asignados
+model TutorCourse {
+  tutorId      String
+  courseId     String
+  assignedAt   DateTime @default(now())
+  assignedById String   // el admin que hizo la asignación
+
+  tutor  User   @relation(fields: [tutorId], references: [id])
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@id([tutorId, courseId])
+}
+
+model Module {
+  id          String        @id @default(cuid())
+  courseId    String
+  title       String
+  description String?
+  order       Int           // posición dentro del curso
+  status      ContentStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now())
+
+  course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons    Lesson[]
+  activities Activity[]
+}
+
+model Lesson {
+  id          String        @id @default(cuid())
+  moduleId    String
+  title       String
+  description String?
+  order       Int           // posición dentro del módulo
+  status      ContentStatus @default(ACTIVE)
+  isRequired  Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+
+  module     Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  materials  Material[]
+  progress   LessonProgress[]
+  activities Activity[]       // actividades evaluativas propias de la lección (ej: quiz al final)
+}
+
+// Una lección puede tener múltiples materiales de distintos tipos
+model Material {
+  id             String       @id @default(cuid())
+  lessonId       String
+  type           MaterialType
+  title          String
+  content        String?      // URL del video, texto en HTML, etc.
+  fileUrl        String?      // para archivos subidos
+  order          Int
+  isDownloadable Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}

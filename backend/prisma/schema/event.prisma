@@ -1,0 +1,37 @@
+// ============================================================
+// EMPLEABILIDAD Y NETWORKING
+// ============================================================
+
+model Event {
+  id               String    @id @default(cuid())
+  title            String
+  description      String
+  type             EventType
+  startDate        DateTime
+  endDate          DateTime?
+  isOnline         Boolean   @default(true)
+  location         String?   // dirección física si no es online
+  meetingLink      String?
+  maxParticipants  Int?
+  requiresCourseId String?   // debe haber completado este curso para inscribirse
+  isActive         Boolean   @default(true)
+  createdById      String
+  createdAt        DateTime  @default(now())
+
+  createdBy      User                 @relation(fields: [createdById], references: [id])
+  requiredCourse Course?              @relation(fields: [requiresCourseId], references: [id])
+  participations EventParticipation[]
+}
+
+model EventParticipation {
+  id           String   @id @default(cuid())
+  eventId      String
+  studentId    String
+  registeredAt DateTime @default(now())
+  attended     Boolean  @default(false)
+
+  event   Event @relation(fields: [eventId], references: [id])
+  student User  @relation(fields: [studentId], references: [id])
+
+  @@unique([eventId, studentId])
+}

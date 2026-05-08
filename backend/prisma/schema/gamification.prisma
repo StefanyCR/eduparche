@@ -1,0 +1,81 @@
+// ============================================================
+// GAMIFICACIÓN
+// ============================================================
+
+// El admin configura cuántos puntos vale cada tipo de evento (aplica a toda la plataforma)
+model GamificationConfig {
+  id       String              @id @default(cuid())
+  trigger  GamificationTrigger @unique
+  points   Int
+  isActive Boolean             @default(true)
+}
+
+model Badge {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  users      UserBadge[]
+  challenges Challenge[]
+}
+
+// Insignia ganada por un usuario
+model UserBadge {
+  id       String   @id @default(cuid())
+  userId   String
+  badgeId  String
+  earnedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  badge Badge @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId]) // no se puede ganar la misma insignia dos veces
+}
+
+// Registro auditado de cada movimiento de puntos
+model PointTransaction {
+  id          String              @id @default(cuid())
+  userId      String
+  points      Int                 // puede ser negativo si aplica penalización
+  trigger     GamificationTrigger
+  referenceId String?             // id del curso, lección o desafío que lo disparó
+  createdAt   DateTime            @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// Desafío creado por el admin
+model Challenge {
+  id          String          @id @default(cuid())
+  title       String
+  description String
+  type        ChallengeType
+  startDate   DateTime
+  endDate     DateTime
+  points      Int             // puntos al completar el desafío
+  badgeId     String?         // insignia opcional al completar
+  status      ChallengeStatus @default(DRAFT)
+  createdById String
+  createdAt   DateTime        @default(now())
+
+  badge          Badge?                   @relation(fields: [badgeId], references: [id])
+  createdBy      User                     @relation(fields: [createdById], references: [id])
+  participations ChallengeParticipation[]
+}
+
+model ChallengeParticipation {
+  id          String    @id @default(cuid())
+  challengeId String
+  studentId   String
+  joinedAt    DateTime  @default(now())
+  completedAt DateTime?
+  isCompleted Boolean   @default(false)
+
+  challenge Challenge @relation(fields: [challengeId], references: [id])
+  student   User      @relation(fields: [studentId], references: [id])
+
+  @@unique([challengeId, studentId])
+}
