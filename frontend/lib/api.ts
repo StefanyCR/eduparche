@@ -19,7 +19,9 @@ let redirecting = false
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401 && typeof window !== 'undefined' && !redirecting) {
+    const url: string = error.config?.url ?? ''
+    const isAuthRoute = url.includes('/auth/login') || url.includes('/auth/register')
+    if (error.response?.status === 401 && typeof window !== 'undefined' && !redirecting && !isAuthRoute) {
       redirecting = true
       await fetch(`${BASE_URL}/auth/logout`, {
         method: 'POST',
