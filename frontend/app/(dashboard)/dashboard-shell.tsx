@@ -11,6 +11,7 @@ import {
   HiOutlineBriefcase,
   HiOutlineUser,
   HiOutlineLogout,
+  HiOutlineCog,
   HiMenu,
   HiX,
 } from 'react-icons/hi'
@@ -19,14 +20,30 @@ import { UserProvider } from '@/lib/user-context'
 import type { AuthUser } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
-const navLinks = [
-  { href: '/dashboard', label: 'Mis cursos',  icon: HiOutlineBookOpen },
-  { href: '/catalogo',  label: 'Catálogo',    icon: HiOutlineViewGrid },
-  { href: '/tutorias',  label: 'Tutorías',    icon: HiOutlineUserGroup },
-  { href: '/logros',    label: 'Logros',      icon: HiOutlineStar },
-  { href: '/empleo',    label: 'Empleo',      icon: HiOutlineBriefcase },
-  { href: '/perfil',    label: 'Perfil',      icon: HiOutlineUser },
-]
+type NavLink = { href: string; label: string; icon: React.ComponentType<{ className?: string }> }
+
+const navByRole: Record<AuthUser['role'], NavLink[]> = {
+  STUDENT: [
+    { href: '/dashboard',       label: 'Mis cursos',      icon: HiOutlineBookOpen  },
+    { href: '/catalogo',        label: 'Catálogo',        icon: HiOutlineViewGrid  },
+    { href: '/tutorias',        label: 'Tutorías',        icon: HiOutlineUserGroup },
+    { href: '/logros',          label: 'Logros',          icon: HiOutlineStar      },
+    { href: '/empleo',          label: 'Empleo',          icon: HiOutlineBriefcase },
+    { href: '/perfil',          label: 'Perfil',          icon: HiOutlineUser      },
+  ],
+  TUTOR: [
+    { href: '/dashboard',        label: 'Mis cursos',      icon: HiOutlineBookOpen  },
+    { href: '/mis-estudiantes',  label: 'Mis estudiantes', icon: HiOutlineUserGroup },
+    { href: '/catalogo',         label: 'Catálogo',        icon: HiOutlineViewGrid  },
+    { href: '/logros',           label: 'Logros',          icon: HiOutlineStar      },
+    { href: '/perfil',           label: 'Perfil',          icon: HiOutlineUser      },
+  ],
+  ADMIN: [
+    { href: '/dashboard',        label: 'Mis cursos',      icon: HiOutlineBookOpen  },
+    { href: '/catalogo',         label: 'Catálogo',        icon: HiOutlineViewGrid  },
+    { href: '/perfil',           label: 'Perfil',          icon: HiOutlineUser      },
+  ],
+}
 
 const roleLabel: Record<AuthUser['role'], string> = {
   STUDENT: 'Estudiante',
@@ -112,7 +129,7 @@ export default function DashboardShell({
 
           {/* Nav */}
           <nav className="flex-1 px-3 py-2 space-y-0.5">
-            {navLinks.map(({ href, label, icon: Icon }) => {
+            {navByRole[user.role].map(({ href, label, icon: Icon }) => {
               const active = pathname === href
               return (
                 <Link
@@ -130,6 +147,21 @@ export default function DashboardShell({
                 </Link>
               )
             })}
+
+            {user.role === 'ADMIN' && (
+              <Link
+                href="/admin"
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors mt-2 border border-dashed border-border',
+                  pathname.startsWith('/admin')
+                    ? 'bg-accent/10 text-accent font-semibold border-accent/30'
+                    : 'text-secondary hover:bg-surface-high hover:text-foreground',
+                )}
+              >
+                <HiOutlineCog className={cn('w-4 h-4 shrink-0', pathname.startsWith('/admin') ? 'text-accent' : 'text-muted')} />
+                Panel admin
+              </Link>
+            )}
           </nav>
 
           {/* XP */}

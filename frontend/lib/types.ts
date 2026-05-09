@@ -1,5 +1,5 @@
 export type UserRole    = 'ADMIN' | 'TUTOR' | 'STUDENT'
-export type UserStatus  = 'ACTIVE' | 'PENDING_APPROVAL' | 'SUSPENDED' | 'INACTIVE'
+export type UserStatus  = 'ACTIVE' | 'PENDING_APPROVAL' | 'INACTIVE' | 'REJECTED'
 export type DocumentType = 'CEDULA' | 'TARJETA_IDENTIDAD' | 'PASAPORTE' | 'OTRO'
 
 export type Profile = {
