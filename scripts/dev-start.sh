@@ -11,7 +11,7 @@ docker compose up -d
 echo ""
 echo "==> Esperando que PostgreSQL esté listo..."
 RETRIES=30
-until docker compose exec -T db pg_isready -U eduparche_user > /dev/null 2>&1 || [ $RETRIES -eq 0 ]; do
+until docker compose exec -T db pg_isready -U "${POSTGRES_USER:-eduparche_user}" > /dev/null 2>&1 || [ $RETRIES -eq 0 ]; do
   echo "    Esperando base de datos... ($RETRIES intentos restantes)"
   RETRIES=$((RETRIES - 1))
   sleep 2
@@ -24,6 +24,12 @@ if [ $RETRIES -eq 0 ]; then
 fi
 
 echo "    PostgreSQL listo."
+
+echo ""
+echo "==> Ejecutando migraciones de Prisma..."
+npm run prisma:deploy --silent
+echo "    Migraciones aplicadas."
+
 echo ""
 echo "==> Iniciando backend (puerto 3001) y frontend (puerto 3000)..."
 echo ""
