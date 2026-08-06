@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import api from '@/lib/api'
 
@@ -10,7 +10,9 @@ import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 
 export default function LoginPage() {
-  const router  = useRouter()
+  const router        = useRouter()
+  const searchParams  = useSearchParams()
+  const justRegistered = searchParams.get('registered') === 'true'
 
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
@@ -51,6 +53,11 @@ export default function LoginPage() {
         <p className="text-sm text-secondary mb-6">Inicia sesión en tu cuenta</p>
 
         <Card>
+          {justRegistered && (
+            <div className="mb-4 rounded-xl bg-success-bg border border-success/20 px-3.5 py-3 text-sm text-success">
+              Cuenta creada con éxito. Inicia sesión para continuar.
+            </div>
+          )}
           {error && (
             <div className="mb-4 rounded-xl bg-danger-bg border border-danger/20 px-3.5 py-3 text-sm text-danger">
               {error}
@@ -107,7 +114,7 @@ export default function LoginPage() {
         <div className="mt-5 space-y-2 text-center">
           <p className="text-sm text-secondary">
             ¿Olvidaste tu contraseña?{' '}
-            <Link href="#" className="text-primary font-medium hover:underline">
+            <Link href="/recuperar-contrasena" className="text-primary font-medium hover:underline">
               Recupérala
             </Link>
           </p>

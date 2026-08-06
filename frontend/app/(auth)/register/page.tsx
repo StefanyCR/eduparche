@@ -67,7 +67,7 @@ export default function RegisterPage() {
 
       if (data.requiresApproval) { setPendingApproval(true); return }
 
-      router.push('/dashboard')
+      router.push('/login?registered=true')
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message

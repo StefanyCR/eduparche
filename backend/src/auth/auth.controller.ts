@@ -3,6 +3,8 @@ import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 // 7 días en milisegundos
 const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
@@ -24,17 +26,14 @@ export class AuthController {
   @Post('register')
   async register(
     @Body() dto: RegisterDto,
-    @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.authService.register(dto);
 
-    // Solo ponemos cookie si el usuario puede acceder de inmediato
-    if (!result.requiresApproval) {
-      res.cookie(COOKIE_NAME, result.access_token, cookieOptions);
-      return { user: result.user };
+    if (result.requiresApproval) {
+      return { requiresApproval: true, message: result.message };
     }
 
-    return { requiresApproval: true, message: result.message };
+    return { requiresApproval: false };
   }
 
   @Post('login')
@@ -53,5 +52,19 @@ export class AuthController {
   logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie(COOKIE_NAME, { path: '/' });
     return { message: 'Sesión cerrada' };
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.authService.forgotPassword(dto);
+    return { message: 'Si ese correo está registrado, recibirás un enlace en breve.' };
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.authService.resetPassword(dto);
+    return { message: 'Contraseña actualizada correctamente.' };
   }
 }

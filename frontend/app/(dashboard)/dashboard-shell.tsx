@@ -17,6 +17,7 @@ import {
 } from 'react-icons/hi'
 import api from '@/lib/api'
 import { UserProvider } from '@/lib/user-context'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 import type { AuthUser } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -172,8 +173,12 @@ export default function DashboardShell({
             </div>
           </div>
 
-          {/* Logout */}
-          <div className="px-3 pb-4 border-t border-border pt-3">
+          {/* Tema + Logout */}
+          <div className="px-3 pb-4 border-t border-border pt-3 space-y-1">
+            <div className="flex items-center justify-between px-3 py-2">
+              <span className="text-sm text-secondary">Tema</span>
+              <ThemeToggle />
+            </div>
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 px-3 py-2 w-full rounded-xl text-sm text-secondary hover:bg-surface-high hover:text-danger transition-colors"

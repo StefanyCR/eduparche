@@ -31,6 +31,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - pgadmindata:/var/lib/pgadmin
 
   redis:
     image: redis:7-alpine
@@ -44,3 +46,4 @@ services:
 volumes:
   pgdata:
   redisdata:
+  pgadmindata:
