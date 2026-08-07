@@ -1,0 +1,596 @@
+{
+  "info": {
+    "_postman_id": "b7e2c1a4-9d3f-4c58-8a12-eduparche0001",
+    "name": "EduParche API v1",
+    "description": "Colección de pruebas de la API pública de EduParche.\n\nCada petición valida tres cosas: el CÓDIGO DE ESTADO esperado, el TIEMPO DE RESPUESTA y la FORMA del JSON devuelto.\n\nAntes de correrla:\n1. Levantar la base:      docker compose up -d db\n2. Levantar el backend:   npm run dev:backend\n3. Seleccionar el entorno 'EduParche - Local'\n\nPara correr todo de una: Runner → seleccionar la colección → Run.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// ============================================================",
+          "// PRUEBAS QUE CORREN EN TODAS LAS PETICIONES DE LA COLECCIÓN",
+          "// Postman ejecuta este script después de los tests propios de",
+          "// cada request, así que estas tres reglas no hay que repetirlas.",
+          "// ============================================================",
+          "",
+          "pm.test('El Content-Type es application/json', function () {",
+          "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "});",
+          "",
+          "// Umbral de rendimiento. 800 ms es holgado para desarrollo local;",
+          "// en un servidor real este número es el que dispara la alarma.",
+          "pm.test('Responde en menos de 800 ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(800);",
+          "});",
+          "",
+          "pm.test('El cuerpo respeta el sobre (trae success)', function () {",
+          "    pm.expect(pm.response.json()).to.have.property('success');",
+          "});",
+          "",
+          "// Deja el tiempo en la consola del Runner para armar la tabla de evidencia.",
+          "console.log(pm.info.requestName + ' → ' + pm.response.code + ' en ' + pm.response.responseTime + ' ms');"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001/api/v1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Catálogo público (lectura)",
+      "item": [
+        {
+          "name": "GET catálogo - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('success es true', function () {",
+                  "    pm.expect(body.success).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test('data es un arreglo', function () {",
+                  "    pm.expect(body.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('meta trae la paginación completa', function () {",
+                  "    pm.expect(body.meta).to.have.all.keys(",
+                  "        'page', 'pageSize', 'total', 'totalPages', 'hasNextPage', 'hasPreviousPage'",
+                  "    );",
+                  "});",
+                  "",
+                  "pm.test('Respeta el pageSize solicitado', function () {",
+                  "    pm.expect(body.data.length).to.be.at.most(5);",
+                  "});",
+                  "",
+                  "// Verificación de privacidad: ningún curso debe traer datos de personas.",
+                  "pm.test('No se filtran datos personales', function () {",
+                  "    const texto = JSON.stringify(body.data);",
+                  "    pm.expect(texto).to.not.include('passwordHash');",
+                  "    pm.expect(texto).to.not.include('documentNumber');",
+                  "    pm.expect(texto).to.not.include('@');",
+                  "});",
+                  "",
+                  "// Guarda un slug real para que las siguientes peticiones lo usen.",
+                  "if (body.data.length > 0) {",
+                  "    pm.collectionVariables.set('courseSlug', body.data[0].slug);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-API-Key", "value": "{{apiKey}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/public/courses?page=1&pageSize=5&sortBy=createdAt&order=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "courses"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "5" },
+                { "key": "sortBy", "value": "createdAt" },
+                { "key": "order", "value": "desc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET catálogo filtrado por nivel - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Todos los resultados son del nivel pedido', function () {",
+                  "    pm.response.json().data.forEach(function (curso) {",
+                  "        pm.expect(curso.level).to.eql('BASIC');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-API-Key", "value": "{{apiKey}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/public/courses?level=BASIC",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "courses"],
+              "query": [{ "key": "level", "value": "BASIC" }]
+            }
+          }
+        },
+        {
+          "name": "GET detalle por slug - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const curso = pm.response.json().data;",
+                  "",
+                  "pm.test('Trae el temario (módulos)', function () {",
+                  "    pm.expect(curso.modules).to.be.an('array');",
+                  "});",
+                  "",
+                  "// El contenido pago NO debe viajar en la respuesta pública:",
+                  "// se expone la estructura del curso, no los videos ni los PDF.",
+                  "pm.test('No expone las URLs de los materiales', function () {",
+                  "    const texto = JSON.stringify(curso);",
+                  "    pm.expect(texto).to.not.include('fileUrl');",
+                  "    pm.expect(texto).to.not.include('\"content\"');",
+                  "});",
+                  "",
+                  "pm.test('Los módulos vienen ordenados', function () {",
+                  "    const ordenes = curso.modules.map(function (m) { return m.order; });",
+                  "    const ordenados = ordenes.slice().sort(function (a, b) { return a - b; });",
+                  "    pm.expect(ordenes).to.eql(ordenados);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-API-Key", "value": "{{apiKey}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/public/courses/{{courseSlug}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "courses", "{{courseSlug}}"]
+            }
+          }
+        },
+        {
+          "name": "GET categorías - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Cada categoría trae su conteo de cursos', function () {",
+                  "    pm.response.json().data.forEach(function (c) {",
+                  "        pm.expect(c).to.have.property('courseCount');",
+                  "        pm.expect(c.courseCount).to.be.a('number');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-API-Key", "value": "{{apiKey}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/public/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "categories"]
+            }
+          }
+        },
+        {
+          "name": "GET estadísticas agregadas - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "const stats = pm.response.json().data;",
+                  "",
+                  "pm.test('Trae todas las métricas esperadas', function () {",
+                  "    pm.expect(stats).to.include.all.keys(",
+                  "        'totalCourses', 'totalStudents', 'totalEnrollments',",
+                  "        'completedEnrollments', 'completionRate', 'coursesByLevel'",
+                  "    );",
+                  "});",
+                  "",
+                  "pm.test('completionRate es un porcentaje entre 0 y 100', function () {",
+                  "    pm.expect(stats.completionRate).to.be.within(0, 100);",
+                  "});",
+                  "",
+                  "// Este endpoint hace 5 consultas agregadas: es el más pesado de la API.",
+                  "pm.test('Las agregaciones responden en menos de 400 ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-API-Key", "value": "{{apiKey}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/public/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Seguridad",
+      "item": [
+        {
+          "name": "Sin X-API-Key - 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 401', function () { pm.response.to.have.status(401); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('success es false', function () {",
+                  "    pm.expect(body.success).to.eql(false);",
+                  "});",
+                  "",
+                  "pm.test('El código de error es UNAUTHORIZED', function () {",
+                  "    pm.expect(body.error.code).to.eql('UNAUTHORIZED');",
+                  "});",
+                  "",
+                  "pm.test('El error trae timestamp y path', function () {",
+                  "    pm.expect(body).to.include.all.keys('timestamp', 'path');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/courses",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "courses"]
+            }
+          }
+        },
+        {
+          "name": "X-API-Key inválida - 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 401', function () { pm.response.to.have.status(401); });",
+                  "",
+                  "// El mensaje no debe decir si la clave existe pero venció, ni cuántos",
+                  "// caracteres coincidieron: eso ayudaría a adivinarla.",
+                  "pm.test('El mensaje no da pistas sobre la clave', function () {",
+                  "    pm.expect(pm.response.json().error.message).to.eql('Credencial de API no válida');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-API-Key", "value": "clave-que-no-existe" }],
+            "url": {
+              "raw": "{{baseUrl}}/public/courses",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "courses"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Validación y errores",
+      "item": [
+        {
+          "name": "Parámetros inválidos - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('El código de error es VALIDATION_ERROR', function () {",
+                  "    pm.expect(body.error.code).to.eql('VALIDATION_ERROR');",
+                  "});",
+                  "",
+                  "pm.test('details lista TODOS los errores, no solo el primero', function () {",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "    pm.expect(body.error.details.length).to.be.at.least(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-API-Key", "value": "{{apiKey}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/public/courses?pageSize=999&level=NOEXISTE",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "courses"],
+              "query": [
+                { "key": "pageSize", "value": "999" },
+                { "key": "level", "value": "NOEXISTE" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Curso inexistente - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('El código de error es RESOURCE_NOT_FOUND', function () {",
+                  "    pm.expect(pm.response.json().error.code).to.eql('RESOURCE_NOT_FOUND');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-API-Key", "value": "{{apiKey}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/public/courses/curso-que-no-existe",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "courses", "curso-que-no-existe"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Escritura (POST)",
+      "item": [
+        {
+          "name": "POST sin consentimiento - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Rechaza por falta de consentimiento', function () {",
+                  "    const detalles = pm.response.json().error.details.join(' ');",
+                  "    pm.expect(detalles).to.include('consentimiento');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentEmail\": \"{{studentEmail}}\",\n  \"courseSlug\": \"{{courseSlug}}\",\n  \"consentGiven\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/public/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "enrollments"]
+            }
+          }
+        },
+        {
+          "name": "POST campo no permitido - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "// Prueba de mass assignment: un campo que no está en el DTO",
+                  "// debe ser rechazado, no ignorado en silencio.",
+                  "pm.test('Rechaza propiedades ajenas al DTO', function () {",
+                  "    const detalles = pm.response.json().error.details.join(' ');",
+                  "    pm.expect(detalles).to.include('should not exist');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentEmail\": \"{{studentEmail}}\",\n  \"courseSlug\": \"{{courseSlug}}\",\n  \"consentGiven\": true,\n  \"role\": \"ADMIN\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/public/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "enrollments"]
+            }
+          }
+        },
+        {
+          "name": "POST estudiante inexistente - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('El código de error es RESOURCE_NOT_FOUND', function () {",
+                  "    pm.expect(pm.response.json().error.code).to.eql('RESOURCE_NOT_FOUND');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentEmail\": \"nadie@correo-inexistente.com\",\n  \"courseSlug\": \"{{courseSlug}}\",\n  \"consentGiven\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/public/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "enrollments"]
+            }
+          }
+        },
+        {
+          "name": "POST inscripción duplicada - 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 409', function () { pm.response.to.have.status(409); });",
+                  "",
+                  "pm.test('El código de error es RESOURCE_CONFLICT', function () {",
+                  "    pm.expect(pm.response.json().error.code).to.eql('RESOURCE_CONFLICT');",
+                  "});",
+                  "",
+                  "// Requisito: 'enrolledStudentEmail' debe ser un estudiante YA inscrito",
+                  "// en 'courseSlug'. Confirma que la restricción de unicidad se traduce",
+                  "// a un 409 legible y no a un 500 de la base de datos."
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentEmail\": \"{{enrolledStudentEmail}}\",\n  \"courseSlug\": \"{{courseSlug}}\",\n  \"consentGiven\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/public/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "enrollments"]
+            }
+          }
+        },
+        {
+          "name": "POST inscripción válida - 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// OJO: esta petición ESCRIBE en la base de datos.",
+                  "// Solo pasa la primera vez; al repetirla devuelve 409, que es",
+                  "// justamente el comportamiento correcto de un POST (no idempotente).",
+                  "",
+                  "pm.test('Código 201 Created', function () { pm.response.to.have.status(201); });",
+                  "",
+                  "const data = pm.response.json().data;",
+                  "",
+                  "pm.test('Devuelve el id de la inscripción creada', function () {",
+                  "    pm.expect(data.enrollmentId).to.be.a('string').and.not.empty;",
+                  "});",
+                  "",
+                  "pm.test('La inscripción nace en estado ACTIVE', function () {",
+                  "    pm.expect(data.status).to.eql('ACTIVE');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('enrollmentId', data.enrollmentId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentEmail\": \"{{studentEmail}}\",\n  \"courseSlug\": \"{{courseSlug}}\",\n  \"consentGiven\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/public/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "enrollments"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
