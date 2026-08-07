@@ -37,10 +37,29 @@ async function bootstrap() {
     }),
   );
 
-  // credentials: true es obligatorio para que el browser envíe cookies
-  // en requests cross-origin (frontend :3000 → backend :3001)
+  // ─── CORS ────────────────────────────────────────────────────────────────
+  // Conviven DOS frontends contra este mismo backend:
+  //   :3000 → Next.js (panel de administración y app actual)
+  //   :4200 → Angular (evidencias EV01 y EV02)
+  // Por eso el origen permitido es una LISTA y no un valor único: con un solo
+  // origen, el navegador bloquearía todas las peticiones del otro frontend.
+  //
+  // credentials: true es obligatorio para que el navegador envíe la cookie de
+  // sesión (ep_token) en peticiones cross-origin. Sin esto, cada petición
+  // llegaría sin cookie y el backend respondería 401.
+  //
+  // Se conserva FRONTEND_URL por compatibilidad con el despliegue existente.
+  const allowedOrigins = (
+    process.env.CORS_ORIGINS ??
+    process.env.FRONTEND_URL ??
+    'http://localhost:3000,http://localhost:4200'
+  )
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    origin: allowedOrigins,
     credentials: true,
   });
 
