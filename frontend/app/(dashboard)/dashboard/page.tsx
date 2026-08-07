@@ -1,12 +1,54 @@
+import Link from 'next/link'
+import { cookies } from 'next/headers'
 import { getServerSession } from '@/lib/session'
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
 import type { AuthUser } from '@/lib/types'
 
 const roleLabels: Record<AuthUser['role'], string> = {
   STUDENT:    'Estudiante',
   TUTOR:      'Tutor',
   ADMIN:      'Administrador',
+}
+
+// Forma de cada elemento de GET /api/v1/enrollments/me
+type MyEnrollment = {
+  id: string
+  status: 'ACTIVE' | 'COMPLETED' | 'WITHDRAWN'
+  enrolledAt: string
+  course: {
+    slug: string
+    title: string
+    level: 'BASIC' | 'INTERMEDIATE' | 'ADVANCED'
+    thumbnail: string | null
+  }
+  totalLessons: number
+  completedLessons: number
+  progress: number
+}
+
+/*
+  Trae las inscripciones del usuario logueado.
+
+  El backend ya devuelve el progreso calculado, así que acá no se hace ninguna
+  cuenta: si el porcentaje se calculara en cada pantalla, tarde o temprano dos
+  pantallas mostrarían números distintos para lo mismo.
+*/
+async function fetchMyCourses(): Promise<MyEnrollment[]> {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('ep_token')
+  const backendUrl = process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'
+
+  const res = await fetch(`${backendUrl}/v1/enrollments/me`, {
+    headers: { Cookie: `ep_token=${token?.value}` },
+    cache: 'no-store',
+  })
+
+  // Si algo falla, el dashboard se muestra igual con la lista vacía:
+  // una sección caída no debería tumbar la página entera.
+  if (!res.ok) return []
+  return res.json()
 }
 
 /*
@@ -16,6 +58,7 @@ const roleLabels: Record<AuthUser['role'], string> = {
 */
 export default async function DashboardPage() {
   const user    = await getServerSession()
+  const courses = await fetchMyCourses()
   const profile = user.profile
   const displayName = profile?.displayName ?? `${profile?.firstName} ${profile?.lastName}`
   const initials    = `${profile?.firstName?.[0] ?? ''}${profile?.lastName?.[0] ?? ''}`.toUpperCase()
@@ -34,7 +77,12 @@ export default async function DashboardPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <StatCard label="Puntos XP"      value={String(user.totalPoints)} color="text-primary"   icon="⚡" />
-        <StatCard label="Cursos activos" value="0"                        color="text-accent"    icon="📚" />
+        <StatCard
+          label="Cursos activos"
+          value={String(courses.filter((e) => e.status === 'ACTIVE').length)}
+          color="text-accent"
+          icon="📚"
+        />
         <StatCard label="Logros"         value="0"                        color="text-highlight" icon="🏆" />
       </div>
 
@@ -82,17 +130,61 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* Mis cursos placeholder */}
+      {/* Mis cursos */}
       <Card>
         <CardHeader>
           <CardTitle>Mis cursos</CardTitle>
           <CardDescription>Cursos en los que estás inscrito</CardDescription>
         </CardHeader>
-        <div className="flex flex-col items-center justify-center py-10 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-surface-high flex items-center justify-center mb-3 text-xl">📚</div>
-          <p className="text-sm font-medium text-foreground">Aún no estás inscrito en ningún curso</p>
-          <p className="text-xs text-secondary mt-1">Explora el catálogo y empieza a aprender</p>
-        </div>
+
+        {courses.length === 0 ? (
+          // Estado vacío con salida: no basta con decir que no hay nada,
+          // hay que ofrecer el siguiente paso.
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-surface-high flex items-center justify-center mb-3 text-xl">📚</div>
+            <p className="text-sm font-medium text-foreground">Aún no estás inscrito en ningún curso</p>
+            <p className="text-xs text-secondary mt-1">Explora el catálogo y empieza a aprender</p>
+            <Link
+              href="/catalogo"
+              className="mt-4 px-4 py-2 text-xs font-medium rounded-xl bg-primary text-white hover:opacity-90 transition-opacity"
+            >
+              Ver catálogo
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {courses.map((enrollment) => (
+              <Link
+                key={enrollment.id}
+                href={`/catalogo/${enrollment.course.slug}`}
+                className="flex items-center gap-4 p-3 rounded-xl border border-border hover:border-primary/40 transition-colors"
+              >
+                <div className="w-11 h-11 rounded-xl bg-surface-high border border-border flex items-center justify-center shrink-0 overflow-hidden">
+                  {enrollment.course.thumbnail ? (
+                    <img src={enrollment.course.thumbnail} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-lg">📘</span>
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-sm font-semibold text-foreground truncate">
+                      {enrollment.course.title}
+                    </p>
+                    {enrollment.status === 'COMPLETED' && (
+                      <Badge variant="success">Completado</Badge>
+                    )}
+                  </div>
+                  <Progress value={enrollment.progress} size="sm" variant="primary" />
+                  <p className="text-xs text-secondary mt-1">
+                    {enrollment.completedLessons} / {enrollment.totalLessons} lecciones · {enrollment.progress}%
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </Card>
 
     </div>
