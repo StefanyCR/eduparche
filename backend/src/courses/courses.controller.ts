@@ -45,6 +45,20 @@ export class CoursesController {
     return this.coursesService.findAllForAdmin(query);
   }
 
+  /**
+   * GET /api/v1/courses/categories — categorías para el selector del formulario.
+   *
+   * OJO CON EL ORDEN: este método DEBE declararse antes que `@Get(':id')`.
+   * Nest evalúa las rutas en el orden en que aparecen, así que si `:id` fuera
+   * primero, capturaría la palabra "categories" como si fuera un id y siempre
+   * devolvería 404.
+   */
+  @Get('categories')
+  @Roles(Role.ADMIN, Role.TUTOR)
+  findCategories() {
+    return this.coursesService.findPublicCategories();
+  }
+
   /** GET /api/v1/courses/:id — detalle por id interno. */
   @Get(':id')
   @Roles(Role.ADMIN, Role.TUTOR)

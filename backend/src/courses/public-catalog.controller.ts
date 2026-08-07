@@ -18,6 +18,7 @@ import { CreatePublicEnrollmentDto } from './dto/create-public-enrollment.dto';
 import { ApiKeyGuard } from '../common/guards/api-key.guard';
 import { ResponseEnvelopeInterceptor } from '../common/interceptors/response-envelope.interceptor';
 import { ApiExceptionFilter } from '../common/filters/api-exception.filter';
+import { EnrollmentsService } from '../enrollments/enrollments.service';
 
 /**
  * ============================================================
@@ -49,7 +50,13 @@ import { ApiExceptionFilter } from '../common/filters/api-exception.filter';
 @UseInterceptors(ResponseEnvelopeInterceptor)
 @UseFilters(ApiExceptionFilter)
 export class PublicCatalogController {
-  constructor(private readonly coursesService: CoursesService) {}
+  constructor(
+    private readonly coursesService: CoursesService,
+    // La inscripción vive en su propio servicio porque el estudiante también
+    // puede inscribirse desde la web. Ambos caminos comparten las mismas
+    // reglas en lugar de duplicarlas.
+    private readonly enrollmentsService: EnrollmentsService,
+  ) {}
 
   /**
    * GET /api/v1/public/courses
@@ -139,6 +146,6 @@ export class PublicCatalogController {
   @Post('enrollments')
   @HttpCode(HttpStatus.CREATED)
   createEnrollment(@Body() dto: CreatePublicEnrollmentDto) {
-    return this.coursesService.createPublicEnrollment(dto);
+    return this.enrollmentsService.enrollByPartner(dto);
   }
 }

@@ -20,6 +20,14 @@ export const publicCourseListSelect = {
   category: { select: { name: true, slug: true } },
   skills: { select: { skill: { select: { name: true, slug: true } } } },
   _count: { select: { enrollments: true } },
+  // Solo para poder contar las lecciones del curso ("12 lecciones" en la
+  // tarjeta). Prisma no puede contar una relación de dos saltos
+  // (curso → módulo → lección), así que se traen los conteos por módulo y
+  // se suman en el servicio. Estos módulos NO salen en la respuesta.
+  modules: {
+    where: { status: 'ACTIVE' as const },
+    select: { _count: { select: { lessons: true } } },
+  },
 } as const;
 
 /**

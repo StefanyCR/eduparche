@@ -17,7 +17,6 @@ import type { PaginatedResult } from '../common/interceptors/response-envelope.i
 import { QueryCoursesDto } from './dto/query-courses.dto';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { ReplaceCourseDto, UpdateCourseDto } from './dto/update-course.dto';
-import { CreatePublicEnrollmentDto } from './dto/create-public-enrollment.dto';
 import {
   adminCourseSelect,
   publicCourseDetailSelect,
@@ -47,8 +46,16 @@ export class CoursesService {
    * Devuelve SOLO cursos con status ACTIVE. Los DRAFT son material sin terminar
    * y los DISABLED se retiraron a propósito: publicar cualquiera de los dos
    * sería mostrarle a un aliado cursos que no puede vender.
+   *
+   * `studentId` es opcional y marca la diferencia entre los dos consumidores:
+   *   - sin id (API pública para aliados) → catálogo a secas
+   *   - con id (estudiante logueado)      → cada curso trae `isEnrolled`,
+   *     para que la tarjeta muestre "Continuar" en vez de "Inscribirse"
    */
-  async findPublicCatalog(query: QueryCoursesDto): Promise<PaginatedResult<unknown>> {
+  async findPublicCatalog(
+    query: QueryCoursesDto,
+    studentId?: string,
+  ): Promise<PaginatedResult<unknown>> {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
     const skip = (page - 1) * pageSize;
@@ -85,10 +92,66 @@ export class CoursesService {
       }),
     ]);
 
+    // Una sola consulta extra resuelve el "¿ya estoy inscrito?" de TODA la
+    // página. La alternativa —preguntar curso por curso— dispara una consulta
+    // por tarjeta: es el problema N+1, y con 20 cursos son 21 viajes a la base
+    // en vez de 3.
+    const myEnrollments = await this.findEnrollmentsForCourses(
+      studentId,
+      courses.map((course) => course.id),
+    );
+
     return {
-      items: courses.map((course) => this.toPublicCourse(course)),
+      items: courses.map((course) => {
+        const summary = this.toCourseSummary(course);
+
+        // Sin estudiante (API de aliados) la respuesta queda tal cual:
+        // `isEnrolled` no tendría sentido si no hay nadie a quien referirse.
+        if (!studentId) return summary;
+
+        const completedLessons = myEnrollments.get(course.id);
+        const isEnrolled = completedLessons !== undefined;
+
+        return {
+          ...summary,
+          isEnrolled,
+          completedLessons: completedLessons ?? 0,
+          progress:
+            isEnrolled && summary.totalLessons > 0
+              ? Math.round((completedLessons / summary.totalLessons) * 100)
+              : 0,
+        };
+      }),
       meta: buildPaginationMeta(total, page, pageSize),
     };
+  }
+
+  /**
+   * Para los cursos indicados, devuelve cuántas lecciones lleva completadas
+   * el estudiante. Un curso ausente del mapa significa "no inscrito".
+   *
+   * Se resuelve en UNA consulta para toda la página, no una por curso.
+   */
+  private async findEnrollmentsForCourses(
+    studentId: string | undefined,
+    courseIds: string[],
+  ): Promise<Map<string, number>> {
+    if (!studentId || courseIds.length === 0) return new Map();
+
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: { studentId, courseId: { in: courseIds } },
+      select: {
+        courseId: true,
+        lessonProgress: { where: { status: 'COMPLETED' }, select: { id: true } },
+      },
+    });
+
+    return new Map(
+      enrollments.map((enrollment) => [
+        enrollment.courseId,
+        enrollment.lessonProgress.length,
+      ]),
+    );
   }
 
   /**
@@ -108,7 +171,7 @@ export class CoursesService {
       throw new NotFoundException(`No existe un curso publicado con slug "${slug}"`);
     }
 
-    return this.toPublicCourse(course);
+    return this.toCourseDetail(course);
   }
 
   /** Categorías con su conteo de cursos publicados. */
@@ -175,93 +238,10 @@ export class CoursesService {
     };
   }
 
-  // ==========================================================
-  // ESCRITURA DESDE SISTEMAS ALIADOS
-  // ==========================================================
-
-  /**
-   * Inscribe a un estudiante existente en un curso publicado.
-   *
-   * Los tres errores posibles se distinguen a propósito, porque quien integra
-   * necesita saber qué corregir:
-   *   404 → el correo o el curso no existen
-   *   409 → ya estaba inscrito (conflicto de estado, no error del cliente)
-   *   422 → la petición es válida pero incumple una regla de negocio
-   *         (le falta el curso prerrequisito)
-   */
-  async createPublicEnrollment(dto: CreatePublicEnrollmentDto) {
-    const student = await this.prisma.user.findUnique({
-      where: { email: dto.studentEmail },
-      select: { id: true, status: true, role: true },
-    });
-
-    if (!student) {
-      throw new NotFoundException(
-        'No existe un estudiante registrado con ese correo',
-      );
-    }
-
-    if (student.status !== UserStatus.ACTIVE) {
-      throw new UnprocessableEntityException(
-        'La cuenta del estudiante no está activa',
-      );
-    }
-
-    const course = await this.prisma.course.findFirst({
-      where: { slug: dto.courseSlug, status: ContentStatus.ACTIVE },
-      select: { id: true, title: true, prerequisiteCourseId: true },
-    });
-
-    if (!course) {
-      throw new NotFoundException(
-        `No existe un curso publicado con slug "${dto.courseSlug}"`,
-      );
-    }
-
-    // Se consulta ANTES de insertar para poder devolver un 409 con un mensaje
-    // claro. Sin esto, la restricción @@unique([studentId, courseId]) de la BD
-    // lanzaría un error P2002 crudo de Prisma, que llegaría al cliente como
-    // un 500 sin explicación.
-    const existing = await this.prisma.enrollment.findUnique({
-      where: { studentId_courseId: { studentId: student.id, courseId: course.id } },
-      select: { id: true },
-    });
-
-    if (existing) {
-      throw new ConflictException('El estudiante ya está inscrito en este curso');
-    }
-
-    // Regla de negocio: si el curso exige otro curso previo, hay que haberlo
-    // COMPLETADO (no basta con estar inscrito).
-    if (course.prerequisiteCourseId) {
-      const prerequisiteDone = await this.prisma.enrollment.findFirst({
-        where: {
-          studentId: student.id,
-          courseId: course.prerequisiteCourseId,
-          status: EnrollmentStatus.COMPLETED,
-        },
-        select: { id: true },
-      });
-
-      if (!prerequisiteDone) {
-        throw new UnprocessableEntityException(
-          'El estudiante no ha completado el curso prerrequisito',
-        );
-      }
-    }
-
-    const enrollment = await this.prisma.enrollment.create({
-      data: { studentId: student.id, courseId: course.id },
-      select: { id: true, status: true, enrolledAt: true },
-    });
-
-    return {
-      enrollmentId: enrollment.id,
-      status: enrollment.status,
-      enrolledAt: enrollment.enrolledAt,
-      course: { slug: dto.courseSlug, title: course.title },
-    };
-  }
+  // NOTA: la creación de inscripciones NO vive acá.
+  // Está en EnrollmentsService, porque hay dos caminos hacia esa misma acción
+  // (el estudiante desde la web y un aliado por la API) y las reglas tienen
+  // que ser idénticas en ambos. Un solo servicio, dos puertas de entrada.
 
   // ==========================================================
   // CRUD INTERNO (panel de administración, protegido con JWT)
@@ -390,18 +370,51 @@ export class CoursesService {
   /**
    * Aplana la respuesta de Prisma a la forma pública del JSON.
    *
-   * Prisma devuelve las relaciones M:M anidadas (`skills[].skill.name`) y el
-   * conteo bajo `_count`. Ninguna de las dos formas debe salir tal cual: son
+   * Prisma devuelve las relaciones M:M anidadas (`skills[].skill.name`) y los
+   * conteos bajo `_count`. Ninguna de las dos formas debe salir tal cual: son
    * detalles de CÓMO guardamos los datos, no de qué ofrece la API. Aplanarlas
    * acá permite reorganizar las tablas mañana sin romper a quien nos consume.
+   *
+   * Hay dos versiones porque hay dos formas distintas de curso:
+   *   summary → para las tarjetas del catálogo (sin temario)
+   *   detail  → para la ficha completa (con temario)
    */
-  private toPublicCourse(course: any) {
-    const { _count, skills, ...rest } = course;
+  private toCourseSummary(course: any) {
+    const { _count, skills, modules, ...rest } = course;
 
     return {
       ...rest,
       skills: (skills ?? []).map((entry: any) => entry.skill),
       enrolledCount: _count?.enrollments ?? 0,
+      // `modules` acá solo traía los conteos, así que se consume y se descarta:
+      // afuera sale el número, no la estructura.
+      totalLessons: this.countLessons(modules),
     };
+  }
+
+  private toCourseDetail(course: any) {
+    const { _count, skills, modules, ...rest } = course;
+
+    return {
+      ...rest,
+      skills: (skills ?? []).map((entry: any) => entry.skill),
+      enrolledCount: _count?.enrollments ?? 0,
+      totalLessons: this.countLessons(modules),
+      modules: modules ?? [],
+    };
+  }
+
+  /**
+   * Suma las lecciones de todos los módulos.
+   *
+   * Acepta las dos formas que devuelve Prisma según el select usado:
+   * el del listado trae `_count.lessons` (solo el número) y el del detalle
+   * trae el arreglo `lessons` completo.
+   */
+  private countLessons(modules: any[] | undefined): number {
+    return (modules ?? []).reduce((total: number, module: any) => {
+      if (Array.isArray(module.lessons)) return total + module.lessons.length;
+      return total + (module._count?.lessons ?? 0);
+    }, 0);
   }
 }
