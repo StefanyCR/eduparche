@@ -1,0 +1,89 @@
+<!--
+  Pantalla "Mis cursos".
+  Consume GET /api/v1/enrollments/me, que ya devuelve el progreso calculado.
+-->
+<div class="container">
+
+  <h1 class="page-title">Mis cursos</h1>
+  <p class="page-subtitle">Tu avance en cada curso</p>
+
+  <app-alert [message]="errorMessage()" type="error" />
+
+  @if (loading()) {
+    <app-loading text="Cargando tus cursos…" />
+  } @else if (enrollments().length === 0) {
+    <div class="empty card">
+      <span class="empty-icon">📚</span>
+      <p class="empty-title">Todavía no estás inscrito en ningún curso</p>
+      <p class="text-sm text-soft">Explorá el catálogo y empezá a aprender</p>
+      <a routerLink="/catalogo" class="btn btn-primary empty-action">Ver catálogo</a>
+    </div>
+  } @else {
+
+    <!-- Resumen: tres números que se calculan a partir de la misma lista -->
+    <div class="stats">
+      <div class="stat card">
+        <p class="stat-value">{{ activeCount() }}</p>
+        <p class="stat-label text-xs text-soft">En curso</p>
+      </div>
+      <div class="stat card">
+        <p class="stat-value">{{ completedCount() }}</p>
+        <p class="stat-label text-xs text-soft">Completados</p>
+      </div>
+      <div class="stat card">
+        <p class="stat-value">{{ averageProgress() }}%</p>
+        <p class="stat-label text-xs text-soft">Avance promedio</p>
+      </div>
+    </div>
+
+    <div class="enrollment-list">
+      @for (enrollment of enrollments(); track enrollment.id) {
+        <article class="enrollment card">
+
+          <div class="enrollment-thumb">
+            @if (enrollment.course.thumbnail) {
+              <img [src]="enrollment.course.thumbnail" [alt]="enrollment.course.title" />
+            } @else {
+              <span>📘</span>
+            }
+          </div>
+
+          <div class="enrollment-body">
+            <div class="enrollment-header">
+              <h2 class="enrollment-title">{{ enrollment.course.title }}</h2>
+              <span
+                class="badge"
+                [class.badge-success]="enrollment.status === 'COMPLETED'"
+                [class.badge-primary]="enrollment.status === 'ACTIVE'"
+                [class.badge-muted]="enrollment.status === 'WITHDRAWN'"
+              >
+                {{ statusLabel(enrollment.status) }}
+              </span>
+            </div>
+
+            <p class="text-xs text-muted">
+              {{ levelLabel(enrollment.course.level) }}
+              @if (enrollment.course.category) {
+                · {{ enrollment.course.category.name }}
+              }
+              · Inscrito el {{ formatDate(enrollment.enrolledAt) }}
+            </p>
+
+            <!-- [style.width.%] enlaza el ancho de la barra al porcentaje.
+                 Angular agrega la unidad "%" automáticamente. -->
+            <div class="progress-track">
+              <div class="progress-bar" [style.width.%]="enrollment.progress"></div>
+            </div>
+
+            <p class="text-xs text-soft">
+              {{ enrollment.completedLessons }} de {{ enrollment.totalLessons }} lecciones
+              · {{ enrollment.progress }}% completado
+            </p>
+          </div>
+
+        </article>
+      }
+    </div>
+  }
+
+</div>

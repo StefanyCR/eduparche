@@ -1,0 +1,72 @@
+<!--
+  Pantalla de inicio de sesión.
+
+  [formGroup]="form" conecta este HTML con el objeto `form` del componente.
+  formControlName enlaza cada input con su campo: lo que el usuario escribe
+  llega solo a TypeScript, sin escuchar eventos a mano.
+-->
+<div class="auth-page">
+  <div class="auth-card card">
+
+    <div class="auth-header">
+      <span class="auth-icon">📘</span>
+      <h1 class="auth-title">Ingresar a EduParche</h1>
+      <p class="auth-subtitle text-sm text-soft">
+        Aprende con tu comunidad favorita
+      </p>
+    </div>
+
+    <!-- Mensajes: informativo (sesión vencida, registro exitoso) y de error -->
+    <app-alert [message]="infoMessage()" type="info" />
+    <app-alert [message]="errorMessage()" type="error" />
+
+    <!-- (ngSubmit) se dispara al pulsar el botón o al presionar Enter -->
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+      <div class="form-group">
+        <label class="form-label" for="email">Correo electrónico</label>
+        <input
+          id="email"
+          type="email"
+          class="form-control"
+          [class.is-invalid]="hasError('email')"
+          formControlName="email"
+          placeholder="tucorreo@ejemplo.com"
+          autocomplete="email"
+        />
+        @if (hasError('email')) {
+          <span class="form-error">Ingresá un correo válido.</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Contraseña</label>
+        <input
+          id="password"
+          type="password"
+          class="form-control"
+          [class.is-invalid]="hasError('password')"
+          formControlName="password"
+          placeholder="Mínimo 8 caracteres"
+          autocomplete="current-password"
+        />
+        @if (hasError('password')) {
+          <span class="form-error">La contraseña debe tener al menos 8 caracteres.</span>
+        }
+      </div>
+
+      <!-- El botón se deshabilita mientras la petición viaja, para que un
+           doble clic no dispare dos peticiones de login. -->
+      <button type="submit" class="btn btn-primary btn-block" [disabled]="submitting()">
+        {{ submitting() ? 'Ingresando…' : 'Ingresar' }}
+      </button>
+
+    </form>
+
+    <p class="auth-footer text-sm text-soft">
+      ¿No tenés cuenta?
+      <a routerLink="/registro">Creá una acá</a>
+    </p>
+
+  </div>
+</div>

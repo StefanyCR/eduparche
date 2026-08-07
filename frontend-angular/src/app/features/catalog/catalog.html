@@ -1,0 +1,121 @@
+<!--
+  Pantalla del catálogo de cursos.
+  Consume GET /api/v1/catalog para listar y POST /api/v1/enrollments al inscribirse.
+-->
+<div class="container">
+
+  <h1 class="page-title">Catálogo</h1>
+  <p class="page-subtitle">
+    {{ courses().length }} curso{{ courses().length === 1 ? '' : 's' }} disponible{{ courses().length === 1 ? '' : 's' }}
+    @if (enrolledCount() > 0) {
+      · estás inscrito en {{ enrolledCount() }}
+    }
+  </p>
+
+  <app-alert [message]="errorMessage()" type="error" />
+  <app-alert [message]="successMessage()" type="success" />
+
+  <!-- Buscador y filtro por nivel. Trabajan sobre los datos ya descargados. -->
+  <div class="filters">
+    <input
+      type="search"
+      class="form-control search-input"
+      placeholder="Buscar un curso…"
+      [value]="searchTerm()"
+      (input)="onSearchChange($event)"
+    />
+
+    <div class="level-filters">
+      @for (filter of levelFilters; track filter.value) {
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="selectedLevel() === filter.value"
+          (click)="selectedLevel.set(filter.value)"
+        >
+          {{ filter.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Tres estados posibles: cargando, sin resultados, o la grilla de cursos -->
+  @if (loading()) {
+    <app-loading text="Cargando el catálogo…" />
+  } @else if (visibleCourses().length === 0) {
+    <div class="empty">
+      <span class="empty-icon">🔍</span>
+      <p class="empty-title">
+        {{ courses().length === 0 ? 'Todavía no hay cursos publicados' : 'Ningún curso coincide' }}
+      </p>
+      <p class="text-sm text-soft">
+        {{ courses().length === 0
+            ? 'Cuando se publique el primero, aparecerá acá'
+            : 'Probá con otro término o quitá los filtros' }}
+      </p>
+    </div>
+  } @else {
+    <!-- track course.id le dice a Angular cómo identificar cada tarjeta, para
+         que al refrescar la lista reutilice las que no cambiaron en vez de
+         volver a dibujarlas todas. -->
+    <div class="course-grid">
+      @for (course of visibleCourses(); track course.id) {
+        <article class="course-card">
+
+          <div class="course-thumb">
+            @if (course.thumbnail) {
+              <img [src]="course.thumbnail" [alt]="course.title" />
+            } @else {
+              <span class="thumb-placeholder">📚</span>
+            }
+            <span class="badge badge-primary course-level">
+              {{ levelLabel(course.level) }}
+            </span>
+          </div>
+
+          <div class="course-body">
+            <h2 class="course-title">{{ course.title }}</h2>
+            <p class="course-description text-sm text-soft">{{ course.description }}</p>
+
+            <p class="text-xs text-muted course-meta">
+              @if (course.isEnrolled) {
+                {{ course.completedLessons }} / {{ course.totalLessons }} lecciones
+              } @else {
+                {{ course.totalLessons }} lecciones · {{ course.enrolledCount }} inscritos
+              }
+            </p>
+
+            <!-- La barra de progreso solo aparece si el usuario está inscrito -->
+            @if (course.isEnrolled) {
+              <div class="progress-track">
+                <div class="progress-bar" [style.width.%]="course.progress"></div>
+              </div>
+            }
+
+            <!-- El botón cambia según el estado del curso y el rol del usuario -->
+            @if (course.isEnrolled) {
+              <button type="button" class="btn btn-outline btn-block" disabled>
+                Ya estás inscrito
+              </button>
+            } @else if (canEnroll()) {
+              <button
+                type="button"
+                class="btn btn-primary btn-block"
+                [disabled]="enrollingSlug() === course.slug"
+                (click)="enroll(course)"
+              >
+                {{ enrollingSlug() === course.slug ? 'Inscribiendo…' : 'Inscribirme' }}
+              </button>
+            } @else {
+              <p class="text-xs text-muted role-note">
+                Solo los estudiantes pueden inscribirse
+              </p>
+            }
+          </div>
+
+        </article>
+      }
+    </div>
+  }
+
+</div>

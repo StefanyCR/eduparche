@@ -1,0 +1,92 @@
+/** Estilos de la pantalla de perfil. */
+
+/* Dos columnas: los datos de la cuenta a la izquierda y el formulario a la
+   derecha. La primera tiene ancho fijo y la segunda ocupa el resto. */
+.profile-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* --- Tarjeta de la cuenta --- */
+.account-card {
+  text-align: center;
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.account-email {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  /* Los correos largos se cortan en vez de desbordar la tarjeta */
+  word-break: break-all;
+}
+
+.account-details {
+  margin-top: 20px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.detail dd {
+  text-align: right;
+}
+
+.account-note {
+  margin-top: 16px;
+  text-align: left;
+  line-height: 1.4;
+}
+
+/* --- Formulario --- */
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+textarea.form-control {
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* En pantallas angostas las columnas se apilan */
+@media (max-width: 800px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,23 @@
+<!--
+  Plantilla raíz de la aplicación.
+
+  <router-outlet /> es el hueco donde Angular inserta la pantalla que
+  corresponde a la URL actual. Todo lo que esté fuera de esa etiqueta se mantiene visible al cambiar de pantalla.
+-->
+
+@if (checkingSession()) {
+  <!-- Mientras se comprueba si hay sesión no se dibuja el resto de la app.
+       Evita el parpadeo de ver el login un instante y saltar al catálogo. -->
+  <div class="app-loading">
+    <div class="app-spinner" aria-hidden="true"></div>
+    <p>Cargando EduParche…</p>
+  </div>
+} @else {
+  @if (showNavbar()) {
+    <app-navbar />
+  }
+
+  <main>
+    <router-outlet />
+  </main>
+}

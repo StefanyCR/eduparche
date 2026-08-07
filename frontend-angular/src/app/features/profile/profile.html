@@ -1,0 +1,147 @@
+<!--
+  Pantalla de perfil.
+  Consume GET /api/users/me para mostrar y PUT /api/users/me para guardar.
+-->
+<div class="container">
+
+  <h1 class="page-title">Mi perfil</h1>
+  <p class="page-subtitle">Consultá y actualizá tus datos personales</p>
+
+  <app-alert [message]="errorMessage()" type="error" />
+  <app-alert [message]="successMessage()" type="success" />
+
+  @if (loading()) {
+    <app-loading text="Cargando tu perfil…" />
+  } @else if (user(); as currentUser) {
+
+    <div class="profile-layout">
+
+      <!-- Columna izquierda: datos de la cuenta, solo lectura -->
+      <aside class="card account-card">
+        <div class="avatar">{{ initial() }}</div>
+
+        <p class="account-email">{{ currentUser.email }}</p>
+        <span class="badge badge-primary">{{ roleLabel(currentUser.role) }}</span>
+
+        <dl class="account-details">
+          <div class="detail">
+            <dt class="text-xs text-soft">Puntos acumulados</dt>
+            <dd class="text-sm">{{ currentUser.totalPoints }}</dd>
+          </div>
+          <div class="detail">
+            <dt class="text-xs text-soft">Tipo de documento</dt>
+            <dd class="text-sm">{{ currentUser.profile?.documentType ?? '—' }}</dd>
+          </div>
+          <div class="detail">
+            <dt class="text-xs text-soft">Número de documento</dt>
+            <dd class="text-sm">{{ currentUser.profile?.documentNumber ?? '—' }}</dd>
+          </div>
+          <div class="detail">
+            <dt class="text-xs text-soft">Miembro desde</dt>
+            <dd class="text-sm">{{ formatDate(currentUser.createdAt) }}</dd>
+          </div>
+        </dl>
+
+        <p class="text-xs text-muted account-note">
+          El correo y el documento no se pueden modificar: son los datos con los
+          que se verificó tu cuenta.
+        </p>
+      </aside>
+
+      <!-- Columna derecha: formulario de edición -->
+      <section class="card">
+        <h2 class="section-title">Datos personales</h2>
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="firstName">Nombre</label>
+              <input
+                id="firstName"
+                type="text"
+                class="form-control"
+                [class.is-invalid]="hasError('firstName')"
+                formControlName="firstName"
+              />
+              @if (hasError('firstName')) {
+                <span class="form-error">El nombre es obligatorio (máx. 50 caracteres).</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="lastName">Apellido</label>
+              <input
+                id="lastName"
+                type="text"
+                class="form-control"
+                [class.is-invalid]="hasError('lastName')"
+                formControlName="lastName"
+              />
+              @if (hasError('lastName')) {
+                <span class="form-error">El apellido es obligatorio (máx. 50 caracteres).</span>
+              }
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="displayName">Nombre para mostrar</label>
+            <input
+              id="displayName"
+              type="text"
+              class="form-control"
+              formControlName="displayName"
+              placeholder="Cómo querés que te vean los demás"
+            />
+            <span class="form-hint">Opcional. Si lo dejás vacío se usa tu nombre y apellido.</span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="phone">Teléfono</label>
+              <input
+                id="phone"
+                type="tel"
+                class="form-control"
+                formControlName="phone"
+                placeholder="3001234567"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="city">Ciudad</label>
+              <input
+                id="city"
+                type="text"
+                class="form-control"
+                formControlName="city"
+                placeholder="Medellín"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="bio">Sobre vos</label>
+            <textarea
+              id="bio"
+              class="form-control"
+              rows="3"
+              formControlName="bio"
+              placeholder="Contá en qué estás y qué te interesa aprender"
+            ></textarea>
+            @if (hasError('bio')) {
+              <span class="form-error">Máximo 500 caracteres.</span>
+            }
+          </div>
+
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
+          </button>
+
+        </form>
+      </section>
+
+    </div>
+  }
+
+</div>

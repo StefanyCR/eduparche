@@ -1,0 +1,199 @@
+/**
+ * =============================================================================
+ * ARCHIVO:   styles.css
+ * PROPÓSITO: Estilos globales de la aplicación EduParche.
+ *
+ * Se cargan una sola vez para toda la app (declarado en angular.json).
+ * Los estilos propios de cada pantalla van en el .css de su componente.
+ * =============================================================================
+ */
+
+/* -----------------------------------------------------------------------------
+ * VARIABLES DE DISEÑO
+ * Se definen una vez acá y se reutilizan en toda la app. Cambiando el color
+ * primario en esta línea cambia en todos los botones y enlaces a la vez.
+ * -------------------------------------------------------------------------- */
+:root {
+  --color-primary: #2563eb;        /* Azul principal: botones y enlaces */
+  --color-primary-dark: #1d4ed8;   /* Variante para el estado :hover */
+  --color-primary-soft: #eff6ff;   /* Fondo suave para resaltados */
+
+  --color-success: #16a34a;        /* Confirmaciones */
+  --color-success-soft: #f0fdf4;
+  --color-danger: #dc2626;         /* Errores */
+  --color-danger-soft: #fef2f2;
+  --color-warning: #d97706;        /* Avisos */
+
+  --color-text: #1e293b;           /* Texto principal */
+  --color-text-soft: #64748b;      /* Texto secundario */
+  --color-muted: #94a3b8;          /* Texto de menor importancia */
+
+  --color-bg: #f8fafc;             /* Fondo de la página */
+  --color-surface: #ffffff;        /* Fondo de tarjetas */
+  --color-border: #e2e8f0;         /* Bordes */
+
+  --radius: 12px;                  /* Redondeo estándar */
+  --shadow: 0 1px 3px rgb(0 0 0 / 8%);
+}
+
+/* -----------------------------------------------------------------------------
+ * REINICIO BÁSICO
+ * Cada navegador aplica márgenes y tamaños por defecto distintos. Igualarlos
+ * acá evita que la app se vea diferente en Chrome y en Firefox.
+ * -------------------------------------------------------------------------- */
+* {
+  box-sizing: border-box;  /* El padding no agranda los elementos */
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* -----------------------------------------------------------------------------
+ * CLASES REUTILIZABLES
+ * -------------------------------------------------------------------------- */
+
+/** Centra el contenido y le pone un ancho máximo cómodo de leer. */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+/** Tarjeta blanca con borde, la base visual de casi todas las pantallas. */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+/* --- Botones --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.btn-outline {
+  background: transparent;
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: var(--color-bg);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* --- Formularios --- */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 12%);
+}
+
+/** Se aplica cuando el campo tiene un error de validación. */
+.form-control.is-invalid {
+  border-color: var(--color-danger);
+}
+
+/** Mensaje de error debajo de un campo. */
+.form-error {
+  font-size: 12px;
+  color: var(--color-danger);
+}
+
+/** Texto de ayuda debajo de un campo. */
+.form-hint {
+  font-size: 12px;
+  color: var(--color-text-soft);
+}
+
+/* --- Etiquetas de estado --- */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-primary { background: var(--color-primary-soft); color: var(--color-primary); }
+.badge-success { background: var(--color-success-soft); color: var(--color-success); }
+.badge-muted   { background: var(--color-bg);           color: var(--color-text-soft); }
+
+/* --- Textos --- */
+.page-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: var(--color-text-soft);
+  margin-bottom: 24px;
+}
+
+.text-soft  { color: var(--color-text-soft); }
+.text-muted { color: var(--color-muted); }
+.text-sm    { font-size: 13px; }
+.text-xs    { font-size: 12px; }

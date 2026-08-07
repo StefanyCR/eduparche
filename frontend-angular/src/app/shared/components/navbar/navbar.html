@@ -1,0 +1,35 @@
+<!--
+  Plantilla del menú de navegación.
+
+  routerLinkActive="active" agrega la clase CSS "active" al enlace cuya ruta
+  coincide con la URL actual, para que el usuario vea dónde está parado.
+-->
+<nav class="navbar">
+  <div class="navbar-inner">
+
+    <!-- Marca: lleva al catálogo, que es la pantalla principal -->
+    <a class="brand" routerLink="/catalogo">
+      <span class="brand-icon">📘</span>
+      <span class="brand-name">EduParche</span>
+    </a>
+
+    <!-- Opciones del menú. Cada una consume una API distinta del backend. -->
+    <div class="nav-links">
+      <a routerLink="/catalogo"   routerLinkActive="active" class="nav-link">Catálogo</a>
+      <a routerLink="/mis-cursos" routerLinkActive="active" class="nav-link">Mis cursos</a>
+      <a routerLink="/perfil"     routerLinkActive="active" class="nav-link">Perfil</a>
+    </div>
+
+    <!-- Datos del usuario y salida.
+         @if solo dibuja este bloque cuando hay una sesión activa. -->
+    @if (currentUser(); as user) {
+      <div class="nav-user">
+        <span class="user-name text-sm">{{ displayName }}</span>
+        <button type="button" class="btn btn-outline btn-sm" (click)="logout()">
+          Salir
+        </button>
+      </div>
+    }
+
+  </div>
+</nav>

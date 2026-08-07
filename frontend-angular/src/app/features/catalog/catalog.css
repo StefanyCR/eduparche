@@ -1,0 +1,160 @@
+/** Estilos de la pantalla del catálogo. */
+
+/* --- Buscador y filtros --- */
+.filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 220px;
+}
+
+.level-filters {
+  display: flex;
+  gap: 6px;
+}
+
+.filter-chip {
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-text-soft);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.filter-chip:hover {
+  background: var(--color-bg);
+}
+
+/* Se aplica al filtro seleccionado */
+.filter-chip.active {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* --- Grilla de cursos ---
+   auto-fill + minmax hace que la grilla se adapte sola: pone tantas columnas
+   como quepan con al menos 260px cada una, sin necesidad de media queries. */
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.course-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.course-card:hover {
+  border-color: var(--color-primary);
+}
+
+.course-thumb {
+  position: relative;
+  height: 130px;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.course-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumb-placeholder {
+  font-size: 36px;
+  opacity: 0.35;
+}
+
+.course-level {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.course-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  flex: 1;
+}
+
+.course-title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* line-clamp recorta la descripción a dos líneas para que todas las tarjetas
+   de la fila queden de la misma altura. */
+.course-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* margin-top auto empuja el pie de la tarjeta hacia abajo, alineando los
+   botones de todas las tarjetas aunque los textos midan distinto. */
+.course-meta {
+  margin-top: auto;
+}
+
+/* --- Barra de progreso --- */
+.progress-track {
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 999px;
+  transition: width 0.3s;
+}
+
+.role-note {
+  text-align: center;
+  padding: 10px 0;
+}
+
+/* --- Estado vacío --- */
+.empty {
+  text-align: center;
+  padding: 64px 16px;
+}
+
+.empty-icon {
+  font-size: 36px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.empty-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}

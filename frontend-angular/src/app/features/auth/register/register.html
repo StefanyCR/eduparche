@@ -1,0 +1,148 @@
+<!--
+  Pantalla de creación de cuenta.
+  Reutiliza los estilos de login.css: las dos pantallas comparten el diseño.
+-->
+<div class="auth-page">
+  <div class="auth-card card">
+
+    <div class="auth-header">
+      <span class="auth-icon">✏️</span>
+      <h1 class="auth-title">Crear cuenta</h1>
+      <p class="auth-subtitle text-sm text-soft">
+        Completá tus datos para empezar
+      </p>
+    </div>
+
+    <app-alert [message]="errorMessage()" type="error" />
+    <app-alert [message]="approvalMessage()" type="info" />
+
+    <!-- Cuando la cuenta queda pendiente de aprobación se oculta el formulario:
+         volver a enviarlo solo produciría un error de correo duplicado. -->
+    @if (!approvalMessage()) {
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="firstName">Nombre</label>
+            <input
+              id="firstName"
+              type="text"
+              class="form-control"
+              [class.is-invalid]="hasError('firstName')"
+              formControlName="firstName"
+              placeholder="Ana"
+            />
+            @if (hasError('firstName')) {
+              <span class="form-error">El nombre es obligatorio.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="lastName">Apellido</label>
+            <input
+              id="lastName"
+              type="text"
+              class="form-control"
+              [class.is-invalid]="hasError('lastName')"
+              formControlName="lastName"
+              placeholder="Gómez"
+            />
+            @if (hasError('lastName')) {
+              <span class="form-error">El apellido es obligatorio.</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Correo electrónico</label>
+          <input
+            id="email"
+            type="email"
+            class="form-control"
+            [class.is-invalid]="hasError('email')"
+            formControlName="email"
+            placeholder="tucorreo@ejemplo.com"
+            autocomplete="email"
+          />
+          @if (hasError('email')) {
+            <span class="form-error">Ingresá un correo válido.</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Contraseña</label>
+          <input
+            id="password"
+            type="password"
+            class="form-control"
+            [class.is-invalid]="hasError('password')"
+            formControlName="password"
+            autocomplete="new-password"
+          />
+          @if (hasError('password')) {
+            <span class="form-error">Debe tener al menos 8 caracteres.</span>
+          } @else {
+            <span class="form-hint">Mínimo 8 caracteres.</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="birthDate">Fecha de nacimiento</label>
+          <input
+            id="birthDate"
+            type="date"
+            class="form-control"
+            [class.is-invalid]="hasError('birthDate')"
+            formControlName="birthDate"
+          />
+          @if (hasError('birthDate')) {
+            <span class="form-error">La fecha de nacimiento es obligatoria.</span>
+          } @else {
+            <span class="form-hint">
+              Si sos menor de 18, tu cuenta necesitará aprobación de un administrador.
+            </span>
+          }
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="documentType">Tipo de documento</label>
+            <!-- @for necesita `track` para saber qué elemento es cuál al
+                 redibujar la lista. Acá se usa el valor, que es único. -->
+            <select id="documentType" class="form-control" formControlName="documentType">
+              @for (option of documentTypes; track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="documentNumber">Número</label>
+            <input
+              id="documentNumber"
+              type="text"
+              class="form-control"
+              [class.is-invalid]="hasError('documentNumber')"
+              formControlName="documentNumber"
+              placeholder="1020304050"
+            />
+            @if (hasError('documentNumber')) {
+              <span class="form-error">El número es obligatorio.</span>
+            }
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" [disabled]="submitting()">
+          {{ submitting() ? 'Creando cuenta…' : 'Crear cuenta' }}
+        </button>
+
+      </form>
+    }
+
+    <p class="auth-footer text-sm text-soft">
+      ¿Ya tenés cuenta?
+      <a routerLink="/login">Ingresá acá</a>
+    </p>
+
+  </div>
+</div>
