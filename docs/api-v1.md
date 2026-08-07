@@ -74,15 +74,25 @@ El esquema tiene 24 modelos. No todos pueden salir de la plataforma. La clasific
 |---|---|---|---|
 | `POST` | `/public/enrollments` | Inscribe a un estudiante en un curso | 201, 400, 401, 404, 409, 422 |
 
-### Administración interna (JWT, no para terceros)
+### Internos (cookie JWT, no para terceros)
 
-| Método | Ruta | Rol |
-|---|---|---|
-| `GET` | `/courses` | ADMIN, TUTOR |
-| `GET` | `/courses/:id` | ADMIN, TUTOR |
-| `POST` | `/courses` | ADMIN |
-| `PUT` | `/courses/:id` | ADMIN |
-| `PATCH` | `/courses/:id` | ADMIN |
+Los consume el frontend de Next.js. No llevan el sobre `{success, data}`: devuelven el objeto directo, que es la forma que ya esperan los componentes.
+
+| Método | Ruta | Rol | Descripción |
+|---|---|---|---|
+| `GET` | `/catalog` | cualquiera autenticado | Catálogo + `isEnrolled` y `progress` del usuario actual |
+| `GET` | `/catalog/:slug` | cualquiera autenticado | Ficha con temario |
+| `POST` | `/enrollments` | STUDENT | El estudiante se inscribe a sí mismo |
+| `GET` | `/enrollments/me` | STUDENT, TUTOR, ADMIN | Mis cursos con progreso calculado |
+| `GET` | `/courses` | ADMIN, TUTOR | Listado de administración (incluye borradores) |
+| `GET` | `/courses/:id` | ADMIN, TUTOR | Detalle por id interno |
+| `POST` | `/courses` | ADMIN | Crear curso |
+| `PUT` | `/courses/:id` | ADMIN | Reemplazo completo |
+| `PATCH` | `/courses/:id` | ADMIN | Actualización parcial |
+
+**Por qué `/catalog` existe si ya está `/public/courses`.** Son la misma información, pero con credenciales distintas. `/public/*` exige `X-API-Key`, una credencial de máquina que se entrega a empresas aliadas; si el navegador la usara, quedaría expuesta en las herramientas de desarrollo. El navegador se autentica con la cookie de sesión. Además `/catalog` agrega `isEnrolled` y `progress`, que solo tienen sentido cuando hay una persona detrás de la petición.
+
+**Dos puertas, una sola lógica.** `POST /enrollments` (el estudiante) y `POST /public/enrollments` (un aliado) terminan en el mismo método privado de `EnrollmentsService`. Las reglas —no duplicar inscripción, exigir el prerrequisito— se aplican idénticas por ambos caminos. Si estuvieran escritas en cada controlador, bastaría corregir una y olvidar la otra para que un camino aceptara lo que el otro rechaza.
 
 ---
 
@@ -129,7 +139,8 @@ Toda respuesta —exitosa o no— viaja en el mismo sobre. Así, quien integra e
       "createdAt": "2026-05-09T20:33:33.917Z",
       "category": { "name": "Programación", "slug": "programacion" },
       "skills": [],
-      "enrolledCount": 1
+      "enrolledCount": 1,
+      "totalLessons": 4
     }
   ],
   "meta": {
