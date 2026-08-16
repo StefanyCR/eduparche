@@ -3,7 +3,8 @@ FROM node:20-alpine AS deps
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+# monorepo dentro del contenedor.
+RUN npm install
 
 # ─── Etapa 2: Build ──────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder

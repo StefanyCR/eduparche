@@ -5,8 +5,9 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copiamos solo package.json primero (aprovecha cache de Docker)
+# npm install (no "ci")
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 # Copiamos el resto del código y compilamos
 COPY . .
@@ -22,7 +23,7 @@ ENV NODE_ENV=production
 
 # Solo instalamos dependencias de producción
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 # Copiamos el build y los archivos que Prisma necesita en runtime
 COPY --from=builder /app/dist ./dist
